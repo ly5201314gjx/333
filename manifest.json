@@ -1,0 +1,28 @@
+{
+  "name": "ZenStudy 备考伴侣",
+  "short_name": "ZenStudy",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdfbf7",
+  "theme_color": "#fdfbf7",
+  "description": "极简主义公务员考试备考打卡应用",
+  "icons": [
+    {
+      "src": "https://lucide.dev/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "https://lucide.dev/favicon.ico",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://lucide.dev/favicon.ico",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

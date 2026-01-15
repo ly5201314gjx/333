@@ -8,9 +8,16 @@ interface Props {
   onClose: () => void;
   logs: DailyLog[];
   reviews: ReviewNote[];
+  onDeleteRange: (startDate: string, endDate: string) => void;
 }
 
-export const HistoryDrawer: React.FC<Props> = ({ isOpen, onClose, logs, reviews }) => {
+export const HistoryDrawer: React.FC<Props> = ({ isOpen, onClose, logs, reviews, onDeleteRange }) => {
+  // Delete UI State
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [deleteStart, setDeleteStart] = useState('');
+  const [deleteEnd, setDeleteEnd] = useState('');
+  const [deleteConfirmStep, setDeleteConfirmStep] = useState(0); // 0: Idle, 1: Range Pick, 2: Confirm 1, 3: Confirm 2, 4: Execute
+
   // Group data by date
   const groupedData = React.useMemo(() => {
       const dates = new Set([
@@ -55,6 +62,42 @@ export const HistoryDrawer: React.FC<Props> = ({ isOpen, onClose, logs, reviews 
           });
       });
       return { totalQ, totalC, totalT, accuracy: totalQ > 0 ? Math.round((totalC/totalQ)*100) : 0 };
+  };
+
+  const handleDeleteFlow = () => {
+    if (deleteConfirmStep === 0) {
+      setDeleteConfirmStep(1); // Show Picker
+    } else if (deleteConfirmStep === 1) {
+      if (!deleteStart || !deleteEnd) return; // Validation
+      setDeleteConfirmStep(2); // First Warning
+    } else if (deleteConfirmStep === 2) {
+      setDeleteConfirmStep(3); // Second Warning
+    } else if (deleteConfirmStep === 3) {
+      // Execute
+      onDeleteRange(deleteStart, deleteEnd);
+      // Reset
+      setDeleteConfirmStep(0);
+      setIsDeleteMode(false);
+      setDeleteStart('');
+      setDeleteEnd('');
+    }
+  };
+
+  const getDeleteButtonText = () => {
+    switch (deleteConfirmStep) {
+      case 1: return "下一步: 确认范围";
+      case 2: return "警告: 确认删除? (1/2)";
+      case 3: return "最终确认: 数据不可恢复 (2/2)";
+      default: return "批量清除数据";
+    }
+  };
+
+  const getDeleteButtonColor = () => {
+    switch (deleteConfirmStep) {
+        case 2: return "bg-orange-500 hover:bg-orange-600";
+        case 3: return "bg-red-600 hover:bg-red-700 animate-pulse";
+        default: return "bg-stone-800 hover:bg-stone-700";
+    }
   };
 
   return (
@@ -217,6 +260,58 @@ export const HistoryDrawer: React.FC<Props> = ({ isOpen, onClose, logs, reviews 
                     })}
                 </div>
             )}
+        </div>
+
+        {/* Data Management Footer */}
+        <div className="p-4 border-t border-stone-100 bg-stone-50">
+           {!isDeleteMode ? (
+             <button 
+               onClick={() => { setIsDeleteMode(true); setDeleteConfirmStep(1); }}
+               className="w-full flex items-center justify-center gap-2 text-stone-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-all text-sm"
+             >
+                <Icon name="Trash2" size={16} />
+                <span>批量数据管理</span>
+             </button>
+           ) : (
+             <div className="animate-fade-in space-y-3">
+               <div className="flex justify-between items-center mb-2">
+                 <h4 className="text-sm font-semibold text-stone-700">批量删除数据</h4>
+                 <button onClick={() => { setIsDeleteMode(false); setDeleteConfirmStep(0); }} className="text-stone-400 hover:text-stone-600">
+                   <Icon name="X" size={16} />
+                 </button>
+               </div>
+               
+               {deleteConfirmStep === 1 && (
+                 <div className="flex items-center gap-2 bg-white p-2 rounded border border-stone-200">
+                    <input 
+                      type="date" 
+                      value={deleteStart}
+                      onChange={(e) => setDeleteStart(e.target.value)}
+                      className="bg-transparent text-xs text-stone-600 focus:outline-none flex-1"
+                    />
+                    <span className="text-stone-300">-</span>
+                    <input 
+                      type="date" 
+                      value={deleteEnd}
+                      onChange={(e) => setDeleteEnd(e.target.value)}
+                      className="bg-transparent text-xs text-stone-600 focus:outline-none flex-1"
+                    />
+                 </div>
+               )}
+
+               <button 
+                 onClick={handleDeleteFlow}
+                 disabled={deleteConfirmStep === 1 && (!deleteStart || !deleteEnd)}
+                 className={`w-full py-2 rounded-lg text-white text-sm font-medium transition-all shadow-md ${getDeleteButtonColor()} disabled:opacity-50 disabled:cursor-not-allowed`}
+               >
+                 {getDeleteButtonText()}
+               </button>
+               
+               {deleteConfirmStep > 1 && (
+                  <p className="text-xs text-center text-red-500">此操作不可撤销，请谨慎操作</p>
+               )}
+             </div>
+           )}
         </div>
       </div>
     </>

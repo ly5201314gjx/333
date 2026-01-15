@@ -26,7 +26,7 @@ export const StatsDashboard: React.FC<Props> = ({ logs }) => {
   });
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
-  // 1. Calculate Streak (Global calculation, independent of filter usually, but let's keep it global based on all logs)
+  // 1. Calculate Streak
   const calculateStreak = () => {
     if (logs.length === 0) return 0;
     const sortedLogs = [...logs].sort((a, b) => b.timestamp - a.timestamp);
@@ -44,15 +44,9 @@ export const StatsDashboard: React.FC<Props> = ({ logs }) => {
 
     if (diffDays > 1) return 0;
 
-    // Use a set to track unique dates processed
     const processedDates = new Set<string>();
     
-    // Check consecutive days backwards
     let currentCheckDate = lastLogDate;
-    
-    // If today has no log but yesterday does, streak starts from 1 (yesterday)
-    // If today has log, streak starts from 1 (today)
-    // We iterate through sorted logs.
     
     for (const log of sortedLogs) {
         const logDate = parseLocal(log.date);
@@ -64,7 +58,6 @@ export const StatsDashboard: React.FC<Props> = ({ logs }) => {
 
         if (logDate.getTime() === currentCheckDate.getTime()) {
             streak++;
-            // Move check date back 1 day
             currentCheckDate.setDate(currentCheckDate.getDate() - 1);
         } else {
             break; 
@@ -120,6 +113,9 @@ export const StatsDashboard: React.FC<Props> = ({ logs }) => {
                 accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
             }
             
+            // Push even if accuracy is 0 to show the timeline gap or 0 progress
+            // But usually charts look better if we skip days? No, standard timeline includes them.
+            // If 0 and no logs, maybe null? Let's keep 0 for simplicity.
             data.push({
                 label: format(current, 'MM-dd'),
                 fullDate: dateStr,
@@ -132,14 +128,12 @@ export const StatsDashboard: React.FC<Props> = ({ logs }) => {
     }
   }, [logs, startDate, endDate]);
 
-  // 3. Totals (Global)
   const getTotalQuestions = () => {
     return logs.reduce((acc, log) => {
         return acc + Object.values(log.categories).reduce((sum: number, cat: QuestionRecord) => sum + cat.total, 0);
     }, 0);
   };
 
-  // 4. Category Weakness (Global)
   const getWeakestCategory = () => {
     if (logs.length === 0) return null;
     const totals: Record<string, {total: number, correct: number}> = {};
@@ -250,7 +244,7 @@ export const StatsDashboard: React.FC<Props> = ({ logs }) => {
 
           <div className="flex-1 w-full min-h-[100px]">
              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{top: 5, right: 0, left: -20, bottom: 0}}>
+                <AreaChart data={chartData} margin={{top: 5, right: 10, left: -20, bottom: 0}}>
                     <defs>
                         <linearGradient id="colorAcc" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#57534e" stopOpacity={0.1}/>
@@ -270,7 +264,16 @@ export const StatsDashboard: React.FC<Props> = ({ logs }) => {
                         domain={[0, 100]} 
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="accuracy" stroke="#57534e" strokeWidth={2} fillOpacity={1} fill="url(#colorAcc)" />
+                    <Area 
+                        type="monotone" 
+                        dataKey="accuracy" 
+                        stroke="#57534e" 
+                        strokeWidth={2} 
+                        fillOpacity={1} 
+                        fill="url(#colorAcc)"
+                        dot={{ r: 3, fill: '#57534e', strokeWidth: 0 }}
+                        activeDot={{ r: 5, fill: '#292524', stroke: '#fff', strokeWidth: 2 }}
+                    />
                 </AreaChart>
              </ResponsiveContainer>
           </div>

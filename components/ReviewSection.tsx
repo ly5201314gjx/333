@@ -423,7 +423,8 @@ export const ReviewSection: React.FC<Props> = ({ logs, reviews, onSaveReview }) 
                       strokeWidth={2} 
                       fillOpacity={1} 
                       fill="url(#colorAccReview)" 
-                      activeDot={{ r: 4, strokeWidth: 0, fill: '#292524' }}
+                      dot={{ r: 3, fill: '#57534e', strokeWidth: 0 }}
+                      activeDot={{ r: 5, fill: '#292524', stroke: '#fff', strokeWidth: 2 }}
                   />
               </AreaChart>
           </ResponsiveContainer>

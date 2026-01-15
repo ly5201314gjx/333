@@ -123,6 +123,36 @@ const App: React.FC = () => {
       setShowRefreshConfirm(false);
   };
 
+  const handleDeleteRange = (startDate: string, endDate: string) => {
+    if (!state.selectedTargetId) return;
+    const targetId = state.selectedTargetId;
+    
+    // Create Date objects (start of startDate and end of endDate)
+    const startTs = new Date(startDate).setHours(0,0,0,0);
+    const endTs = new Date(endDate).setHours(23,59,59,999);
+
+    setState(prev => {
+        const targetLogs = prev.logs[targetId] || [];
+        const targetReviews = prev.reviews?.[targetId] || [];
+
+        const newLogs = targetLogs.filter(log => {
+             const t = log.timestamp || new Date(log.date).getTime();
+             return t < startTs || t > endTs;
+        });
+
+        const newReviews = targetReviews.filter(rev => {
+            const t = rev.timestamp;
+            return t < startTs || t > endTs;
+        });
+
+        return {
+            ...prev,
+            logs: { ...prev.logs, [targetId]: newLogs },
+            reviews: { ...prev.reviews, [targetId]: newReviews }
+        };
+    });
+  };
+
   return (
     <div className="min-h-screen bg-stone-50 font-sans text-stone-800 selection:bg-stone-200">
       
@@ -172,6 +202,7 @@ const App: React.FC = () => {
         onClose={() => setIsHistoryOpen(false)} 
         logs={currentLogs}
         reviews={currentReviews}
+        onDeleteRange={handleDeleteRange}
       />
 
       {/* 4. Main Layout */}
