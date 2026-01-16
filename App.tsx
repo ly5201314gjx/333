@@ -123,6 +123,21 @@ const App: React.FC = () => {
       setShowRefreshConfirm(false);
   };
 
+  // Delete a specific log entry by ID
+  const handleDeleteLog = (logId: string) => {
+      if (!state.selectedTargetId) return;
+      setState(prev => {
+          const targetLogs = prev.logs[prev.selectedTargetId!] || [];
+          return {
+              ...prev,
+              logs: {
+                  ...prev.logs,
+                  [prev.selectedTargetId!]: targetLogs.filter(l => l.id !== logId)
+              }
+          };
+      });
+  };
+
   const handleDeleteRange = (startDate: string, endDate: string) => {
     if (!state.selectedTargetId) return;
     const targetId = state.selectedTargetId;
@@ -203,6 +218,7 @@ const App: React.FC = () => {
         logs={currentLogs}
         reviews={currentReviews}
         onDeleteRange={handleDeleteRange}
+        onDeleteLog={handleDeleteLog}
       />
 
       {/* 4. Main Layout */}
